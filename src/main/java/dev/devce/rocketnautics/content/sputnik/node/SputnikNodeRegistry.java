@@ -33,6 +33,8 @@ public final class SputnikNodeRegistry {
         register(new SensorVelocityHandler());
         register(new SensorAttitudeHandler());
 
+        register(new CelestialTransferHandler());
+
         register(new DisplayHandler("display", "Display", ImColor.rgb(40, 140, 110)));
         register(new DisplayHandler("display_bridge", "Display Bridge", ImColor.rgb(168, 72, 72)));
         register(new SputnikLinkHandler());
@@ -347,6 +349,78 @@ public final class SputnikNodeRegistry {
                 ctx.setOutput("z", 1.0);
                 ctx.setOutput("dir_z", 1.0);
             }
+        }
+    }
+
+    private static class CelestialTransferHandler implements INodeHandler {  // best for transferring orbits between Celestial Bodies.
+        public String getTypeId() { return "orbits_calculate"; }
+        public String getTitle() { return "Celestial Transfer Calculator"; }
+        public String getCategory() { return "Orbits"; }
+        public int getHeaderColor() { return ImColor.rgb(141, 70, 150); }
+        public List<SputnikPin> createInputs() { return List.of(
+                new SputnikPin("primary_body", "Initial Circular Velocity", PinType.NUMBER, true),
+                new SputnikPin("secondary_body", "Initial Circular Velocity", PinType.NUMBER, true),
+                new SputnikPin("initial_circular_orbit", "Initial Circular Orbit radius", PinType.NUMBER, true),
+                new SputnikPin("target_orbit", "Target Orbit", PinType.NUMBER, true),
+                new SputnikPin("target_parking_orbit", "Target Parking Orbit", PinType.NUMBER, true)
+        ); }
+        public List<SputnikPin> createOutputs() {
+            // Note:  I had to get AI to help me determine what outputs are needed, im not an expert on orbital mechanics.
+            // mainly outputs in m/s because 1 block = 1 meter
+            return List.of(
+                    new SputnikPin("phase_angle", "Alignment Angle", PinType.NUMBER, false),
+                    new SputnikPin("flight_time", "Total Flight time", PinType.NUMBER, false),
+                    new SputnikPin("departure_burn", "Velocity Needed", PinType.NUMBER, false),
+                    new SputnikPin("arrival_burn", "Braking Velocity", PinType.NUMBER, false),
+                    new SputnikPin("total_dv", "Transfer Velocity Arrival", PinType.NUMBER, false)
+            );
+        }
+        // equations for calculating celestial transfer
+        // AI helped write the equations for the patched conics approximation and its logic
+        // I'm not a math nerd, so yeah
+        public void execute(SputnikNode node, NodeExecutionContext ctx) {
+            double r1 = ctx.getInputAsDouble("initial_circular_orbit", 0.0);
+            double r2 = ctx.getInputAsDouble("target_orbit", 0.0);
+            double mu1 = ctx.getInputAsDouble("primary-body", 3.986004418E14); // default value is earth's gravitational constant for mu
+            double mu2 = ctx.getInputAsDouble("secondary-body", 4.9048695E12); // same for moon
+            double target_alt_orbit = ctx.getInputAsDouble("target_parking_orbit", 1837000.0);
+
+            double r_soi = r2 * Math.pow((mu2 / mu1), 0.4);
+
+            // 3. Phase 1: Departure Ellipse (Targeting the edge of the SOI)
+            double ra = r2 - r_soi;
+            double at = (r1 + ra) / 2.0;
+
+            double v1 = Math.sqrt(mu1 / r1);
+            double vt1 = Math.sqrt(mu1 * ((2.0 / r1) - (1.0 / at)));
+            double delta_v1 = vt1 - v1; // Departure Burn (TLI)
+
+            // 4. Phase 2 & 3: The Patch Boundary & Arrival Speed
+            double v_arrival = Math.sqrt(mu1 * ((2.0 / ra) - (1.0 / at))); // Speed when hitting SOI edge
+            double v_target_body = Math.sqrt(mu1 / r2);                   // Orbital speed of the Moon
+            double v_infinity = v_target_body - v_arrival;                // Speed relative to the Moon
+
+            // 5. Phase 4: Lunar Hyperbola & Capture Burn
+            double ah = mu2 / Math.pow(v_infinity, 2.0); // Hyperbolic semi-major axis
+            double vp = Math.sqrt(mu2 * ((2.0 / target_alt_orbit) + (1.0 / ah))); // Speed at closest approach
+            double v_lunar_circle = Math.sqrt(mu2 / target_alt_orbit);   // Needed speed to circularize around Moon
+            double delta_v2 = vp - v_lunar_circle; // Arrival Burn (LOI)
+
+            // 6. Timing & Launch Window (Phase Angle)
+            double TOF = Math.PI * Math.sqrt(Math.pow(at, 3) / mu1);       // Time of flight in seconds
+            double omega_target = Math.sqrt(mu1 / Math.pow(r2, 3));       // Target angular velocity (rad/s)
+            double lead_angle_rad = omega_target * TOF;
+            double phase_angle_deg = 180.0 - Math.toDegrees(lead_angle_rad);
+
+            // 7. Grand Totals
+            double total_dv = Math.abs(delta_v1) + Math.abs(delta_v2);
+            double TOF_days = TOF / 86400.0;
+
+            ctx.setOutput("phase_angle", phase_angle_deg);   // Pin 1: Target alignment angle
+            ctx.setOutput("time_of_flight", TOF_days);        // Pin 2: Estimated travel time in days
+            ctx.setOutput("departure_burn", delta_v1);       // Pin 3: m/s required for the TLI burn
+            ctx.setOutput("arrival_burn", delta_v2);         // Pin 4: m/s required for the LOI braking burn
+            ctx.setOutput("total_dv", total_dv);
         }
     }
 
