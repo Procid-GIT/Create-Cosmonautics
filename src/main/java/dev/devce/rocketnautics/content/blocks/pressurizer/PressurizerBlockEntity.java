@@ -34,7 +34,7 @@ public class PressurizerBlockEntity extends SmartBlockEntity implements IHaveGog
     private LongOpenHashSet localPressurized = new LongOpenHashSet(); // local copy of pressurized blocks
     public ScrollOptionBehaviour<ToggleMode> modeSelector;
     public static final int ENERGY_CAPACITY = 10000;
-    public static final int CONSUMPTION_RATE = 100;
+    public static final int CONSUMPTION_RATE = 5;
     public final CustomEnergyStorage energyStorage = new CustomEnergyStorage(ENERGY_CAPACITY, CONSUMPTION_RATE);
     public static LongOpenHashSet pressurized = new LongOpenHashSet();
     int ticksSinceUpdate = 0;
