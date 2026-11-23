@@ -8,11 +8,15 @@
       "model": "rocketnautics:block/drain_valve",
       "x": 180
     },
-    "facing=up,powered=false": {
-      "model": "rocketnautics:block/drain_valve"
+    "facing=east,powered=false": {
+      "model": "rocketnautics:block/drain_valve",
+      "x": 90,
+      "y": 90
     },
-    "facing=up,powered=true": {
-      "model": "rocketnautics:block/drain_valve"
+    "facing=east,powered=true": {
+      "model": "rocketnautics:block/drain_valve",
+      "x": 90,
+      "y": 90
     },
     "facing=north,powered=false": {
       "model": "rocketnautics:block/drain_valve",
@@ -32,6 +36,12 @@
       "x": 90,
       "y": 180
     },
+    "facing=up,powered=false": {
+      "model": "rocketnautics:block/drain_valve"
+    },
+    "facing=up,powered=true": {
+      "model": "rocketnautics:block/drain_valve"
+    },
     "facing=west,powered=false": {
       "model": "rocketnautics:block/drain_valve",
       "x": 90,
@@ -41,16 +51,6 @@
       "model": "rocketnautics:block/drain_valve",
       "x": 90,
       "y": 270
-    },
-    "facing=east,powered=false": {
-      "model": "rocketnautics:block/drain_valve",
-      "x": 90,
-      "y": 90
-    },
-    "facing=east,powered=true": {
-      "model": "rocketnautics:block/drain_valve",
-      "x": 90,
-      "y": 90
     }
   }
 }

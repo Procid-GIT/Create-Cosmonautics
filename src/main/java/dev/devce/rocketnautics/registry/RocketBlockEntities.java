@@ -117,6 +117,10 @@ public class RocketBlockEntities {
                         .blockEntity("energy_tank", dev.devce.rocketnautics.content.blocks.energy_tank.EnergyTankBlockEntity::new)
                         .validBlocks(RocketBlocks.ENERGY_TANK).register();
 
+        public static final BlockEntityEntry<dev.devce.rocketnautics.content.blocks.pressurizer.PressurizerBlockEntity> PRESSURIZER = REGISTRATE
+                        .blockEntity("pressurizer", dev.devce.rocketnautics.content.blocks.pressurizer.PressurizerBlockEntity::new)
+                        .validBlocks(RocketBlocks.PRESSURIZER).register();
+
         public static void register(IEventBus eventBus) {
                 eventBus.addListener(RocketBlockEntities::registerCapabilities);
         }
@@ -128,6 +132,7 @@ public class RocketBlockEntities {
                 event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, GYRODYNE.get(), (be, side) -> be.getEnergyStorage(side));
                 event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, SPUTNIK.get(), (be, side) -> be.getEnergyStorage(side));
                 event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ENERGY_TANK.get(), (be, side) -> be.getEnergyStorage(side));
+                event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PRESSURIZER.get(), (be, side) -> be.getEnergyStorage(side));
                 event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, ROCKET_THRUSTER.get(), (be, side) -> be.fuelTank);
                 event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, VECTOR_THRUSTER.get(), (be, side) -> be.fuelTank);
                 event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, HOSE_ANCHOR.get(), (be, side) -> be.fuelTank);

@@ -4,6 +4,8 @@ import com.simibubi.create.content.equipment.armor.BacktankUtil;
 import dev.devce.rocketnautics.RocketNautics;
 import dev.devce.rocketnautics.api.orbit.AtmosphereFlags;
 import dev.devce.rocketnautics.api.orbit.DeepSpaceHelper;
+import dev.devce.rocketnautics.content.RocketDimensions;
+import dev.devce.rocketnautics.content.blocks.pressurizer.PressurizerBlockEntity;
 import dev.devce.rocketnautics.content.items.JetpackItem;
 import dev.devce.rocketnautics.content.items.LegThrustersItem;
 import dev.devce.rocketnautics.content.orbit.universe.PlanetDimensionData;
@@ -16,6 +18,7 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMaps;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,12 +26,14 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingBreatheEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
@@ -431,9 +436,11 @@ public class GlobalSpacePhysicsHandler {
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onLivingBreathe(LivingBreatheEvent event) {
         if (event.canBreathe()) {
-            if (getFlags(event.getEntity()).contains(AtmosphereFlags.DROWNING)) {
-                if ((!(event.getEntity() instanceof Player player) || !player.getAbilities().invulnerable)) {
-                    event.setCanBreathe(false);
+            LivingEntity entity = event.getEntity();
+            BlockPos eyePos = BlockPos.containing(entity.getEyePosition());
+            if (getFlags(entity).contains(AtmosphereFlags.DROWNING)) {
+                if ((!(entity instanceof Player player) || !player.getAbilities().invulnerable)) {
+                    event.setCanBreathe(PressurizerBlockEntity.pressurized.contains(eyePos.asLong())); // Can breathe if in a place marked as pressurized air globally.
                 }
             }
         }
@@ -448,6 +455,17 @@ public class GlobalSpacePhysicsHandler {
             double normalGravity = -11f;
             event.setDistance((float) (event.getDistance() * gravity / normalGravity));
         }
+    }
+
+    @SubscribeEvent
+    public static void onLevelUnload(LevelEvent.Unload event) {
+        if (event.getLevel() instanceof Level level) {
+            // Only wipe if the Moon/Space dimension itself is unloading
+            if (level.dimension().equals(RocketDimensions.MOON)) {
+                PressurizerBlockEntity.pressurized.clear(); // clear all pressurized air positions globally (static method)
+            }
+        }
+
     }
 
     public static @NotNull EnumSet<AtmosphereFlags> getFlags(LivingEntity entity) {

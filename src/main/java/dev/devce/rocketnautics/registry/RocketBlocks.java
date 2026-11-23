@@ -435,6 +435,16 @@ public class RocketBlocks {
                                         .unlockedBy("has_titanium_casing", prov.has(RocketBlocks.TITANIUM_CASING)).save(prov))
                         .build().register();
 
+        public static final BlockEntry<dev.devce.rocketnautics.content.blocks.pressurizer.PressurizerBlock> PRESSURIZER = REGISTRATE
+                        .block("pressurizer", dev.devce.rocketnautics.content.blocks.pressurizer.PressurizerBlock::new)
+                        .initialProperties(() -> Blocks.IRON_BLOCK).properties(BlockBehaviour.Properties::noOcclusion)
+                        .transform(existingDirectionalModel("pressurizer"))
+                        .transform(pickaxeOnly()).tag(RocketTags.BlockTags.HEAVY.tag).item(RocketBlockItem::new)
+                        .transform(RocketItems.noGeneratedModel())
+                        .build().register();
+
+
+
         static {
                 REGISTRATE.setCreativeTab(RocketTabs.WORLD_TAB);
         }

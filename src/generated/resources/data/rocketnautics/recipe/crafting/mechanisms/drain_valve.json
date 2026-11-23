@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "tag": "c:plates/copper"
+    },
+    "N": {
+      "item": "create:fluid_valve"
+    },
+    "P": {
+      "item": "create:fluid_pipe"
+    }
+  },
+  "pattern": [
+    " N ",
+    " C ",
+    " P "
+  ],
+  "result": {
+    "count": 1,
+    "id": "rocketnautics:drain_valve"
+  }
+}
