@@ -13,6 +13,11 @@ import dev.devce.rocketnautics.network.ReentryHeatPayload;
 import dev.devce.rocketnautics.registry.RocketParticles;
 import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.companion.SableCompanion;
+import dev.ryanhcode.sable.companion.SubLevelAccess;
+import dev.ryanhcode.sable.companion.math.BoundingBox3d;
+import dev.ryanhcode.sable.companion.math.BoundingBox3i;
+import dev.ryanhcode.sable.companion.math.BoundingBox3ic;
 import dev.ryanhcode.sable.platform.SableEventPlatform;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
@@ -28,6 +33,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -438,9 +444,29 @@ public class GlobalSpacePhysicsHandler {
         if (event.canBreathe()) {
             LivingEntity entity = event.getEntity();
             BlockPos eyePos = BlockPos.containing(entity.getEyePosition());
+            Level level = entity.level();
+            Vec3 rawEyePos = entity.getEyePosition(); // Vec3 version of eyePos
             if (getFlags(entity).contains(AtmosphereFlags.DROWNING)) {
                 if ((!(entity instanceof Player player) || !player.getAbilities().invulnerable)) {
-                    event.setCanBreathe(PressurizerBlockEntity.pressurized.contains(eyePos.asLong())); // Can breathe if in a place marked as pressurized air globally.
+                    // AI generated logic to debug my previous logic
+                    // Makes a bounding box around the eye position that is scaled by 1
+                    BoundingBox3d boundingBox = new BoundingBox3d(
+                            eyePos.getX() - 1, eyePos.getY() - 1, eyePos.getZ() - 1,
+                            eyePos.getX() + 1, eyePos.getY() + 1, eyePos.getZ() + 1
+                    );
+
+                    // Iterate through all sublevels in dimension to see which one is the player on
+                    for (SubLevelAccess subLevel : SableCompanion.INSTANCE.getAllIntersecting(level, boundingBox)) {
+                        Vec3 plotEyePos = subLevel.logicalPose().transformPositionInverse(rawEyePos); // Turn into local coordinates
+                        BlockPos candidate = BlockPos.containing(plotEyePos); // Potential candidate to contain the eye position relative to plot
+                        // set eyepos to candidate if match.
+                        if (PressurizerBlockEntity.getPressurized(level).contains(candidate.asLong())) {
+                            eyePos = candidate;
+                            break;
+                        }
+                    }
+                    // If the pressurized set for the current dimension contains the current Eyepos, then the player or entity can breathe.
+                    event.setCanBreathe(PressurizerBlockEntity.getPressurized(level).contains(eyePos.asLong())); // Can breathe according to boolean
                 }
             }
         }

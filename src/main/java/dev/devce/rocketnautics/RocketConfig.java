@@ -42,6 +42,7 @@ public class RocketConfig {
         public final ModConfigSpec.BooleanValue boomEnabled;
         public final ModConfigSpec.DoubleValue sonicBoomSpeedThreshold;
         public final ModConfigSpec.DoubleValue gyrodyneStrength;
+        public final ModConfigSpec.IntValue maxPressurizedVolume;
 
         public final ModConfigSpec.EnumValue<PlanetShape> planetShape;
 
@@ -83,6 +84,9 @@ public class RocketConfig {
             sonicBoomSpeedThreshold = builder
                     .comment("Speed in blocks/second (m/s) at which a ship breaks the sound barrier and triggers a sonic boom")
                     .defineInRange("sonicBoomSpeedThreshold", 166.0, 1.0, 500.0);
+            maxPressurizedVolume = builder
+                    .comment("Maximum volume in blocks the pressurizer can pressurize")
+                    .defineInRange("maxPressurizedVolume", 1000, 1, 10000);
             builder.pop();
 
             builder.push("Jetpack");
